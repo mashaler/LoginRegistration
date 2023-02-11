@@ -3,29 +3,54 @@ from tkinter import messagebox
 from PIL import ImageTk
 import pymysql
 
+def clear():
+    emailEntry.delete(0,END)
+    usernameEntry.delete(0,END)
+    passwordEntry.delete(0,END)
+    confirmEntry.delete(0,END)
+    check.set(0)
+
 def connect_database():
-    if emailEntry.get() == '' or usernameEntry.get() =='' or passwordEntry.get() =='' or confirmEntry.get() =='':
+    if emailEntry.get() =='' or usernameEntry.get() =='' or passwordEntry.get() =='' or confirmEntry.get() =='':
         messagebox.showerror('Error','All fields are required')
     elif passwordEntry.get() != confirmEntry.get():
         messagebox.showerror('Error','Password Mismatch')
 
-    elif check.get() == 0:
+    elif check.get() ==0:
         messagebox.showerror('Error','Please accept the terms and conditions')
     else:
         try:
-            con = pymysql.connect(host='localhost',user='root',password='1234')
+            con = pymysql.Connect(host='localhost', user='root', password='root')
             mycursor = con.cursor()
         except:
             messagebox.showerror('Error','Database Connectivity Issue, Please Try Again')
             return
-    
-    query = 'create database userdata'
-    mycursor.execute(query)
-    query = 'use userdata'
-    mycursor.execute(query)
-    query = 'create table data(id int auto_increment primary key not null,email varchar(50),username varchar(100),password varchar(20))'
-    mycursor.execute(query)
-    
+    try:
+        query ='create database userdata'
+        mycursor.execute(query)
+        query ='use userdata'
+        mycursor.execute(query)
+        query = 'create table data(id int auto_increment primary key not null, email varchar(50), username varchar(100), password varchar(20))'
+        mycursor.execute(query)
+    except:
+        mycursor.execute('use userdata')
+
+    query = 'select * from data where username = %s'
+    mycursor.execute(query,(usernameEntry.get()))
+
+    row = mycursor.fetchone()
+    if row != None:
+        messagebox.showerror('Error','Username Already exists')
+    else:
+
+        query = 'insert into data(email,username,password) values(%s,%s,%s)'
+        mycursor.execute(query,(emailEntry.get(), usernameEntry.get(), passwordEntry.get()))
+        con.commit()
+        con.close()
+        messagebox.showinfo('success','registration is successful')
+        clear()
+        signup_window.destroy()
+        import signin
 
 def login_page():
     signup_window.destroy()
